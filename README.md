@@ -13,4 +13,4 @@ In this project, we create a Tagcloud visualization based on Google Books Ngram.
 * PHP Sever
 
 ## Result
-![Screenshot](screenshot.png)
+![A screenshot of the Tagcloud visulization](Screenshot.png)
