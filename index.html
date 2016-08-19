@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Word Cloud Generator</title>
+<head>
+  <link rel="icon" 
+      type="image/png" 
+      href="favicon.gif">
+  <link type="text/css" rel="stylesheet" href="materialize/css/materialize.css"  media="screen,projection"/>
+  <link rel="stylesheet" href="jquery-ui/jquery-ui.css">
+</head>
+
+<style>
+body {
+  position: relative;
+  font-family: "Helvetica Neue", sans-serif;
+  padding-left: 10%;
+  padding-right: 10%;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 1em;
+}
+
+#container{
+  width: 78%;
+}
+
+#presets a { border-left: solid #666 1px; padding: 0 10px; }
+#presets a.first { border-left: none; }
+#keyword { width: 300px; }
+#fetcher { width: 500px; }
+#keyword, #go { font-size: 1.5em; }
+#text { width: 100%; height: 100px; }
+p.copy { font-size: small; }
+#form { font-size: small; position: relative; }
+hr { border: none; border-bottom: solid #ccc 1px; }
+a.active { text-decoration: none; color: #000; font-weight: bold; cursor: text; }
+#angles line, #angles path, #angles circle { stroke: #666; }
+#angles text { fill: #333; }
+#angles path.drag { fill: #666; cursor: move; }
+#angles { text-align: center; margin: 0 auto; width: 350px; }
+#angles input, #max { width: 42px; }
+
+#overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: #000;
+    opacity: 0.8;
+    filter: alpha(opacity=80);
+}
+#loading {
+    width: 50px;
+    height: 57px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -28px 0 0 -25px;
+}
+
+</style>
+<div id="vis"></div>
+<div id="container">
+<!--<h2>Slider with slide event: <span id="slider3text">0</span></h2>-->
+<!--<div id="slider"></div>-->
+
+<p class="range-field">
+  <input type="range" id="slider" min="1800" max="2008" />
+</p>
+
+<form id="form">
+<p style="position: absolute; right: 0; top: 0" id="status"></p>
+
+<div style="text-align: center">
+  <div id="presets"></div>
+  <div id="custom-area">
+    <div class="switch">
+      <input name="group1" type="radio" id="frequency" checked/>
+      <label for="frequency">Frequency</label>
+      <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <input name="group1" type="radio" id="hist" />
+      <label for="hist">Google n-grams</label> 
+      <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      |
+      <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <label>
+        Sentiments: Off
+        <input id="lever" type="checkbox">
+        <span class="lever"></span>
+        On
+      </label>
+      <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <button id="go" class="btn waves-effect waves-light" type="submit">Submit
+        <i class="mdi-content-send right"></i>
+      </button>
+      <label id="loading2" hidden>Loading data from Google</label>
+      </div>
+
+    <p>
+    <div class="input-field">
+      <i class="mdi-editor-mode-edit prefix"></i>
+      <textarea id="text" class="materialize-textarea">
+        In the language of visual design, a tag cloud (or word cloud) is one kind of "weighted list", as commonly used on geographic maps to represent the relative size of cities in terms of relative typeface size. An early printed example of a weighted list of English keywords was the "subconscious files".
+
+        Oversaturation of the tag cloud method and ambivalence about its utility as a web-navigation tool led to a noted decline of usage among these early adopters. (Flickr would later apologize to the web-development community in their five-word acceptance speech for the "Best Practices" Webby Award, where they simply stated "sorry about the tag clouds.")
+      </textarea>
+      <label for="text">Add URLs or Text.</label>
+    </div>
+  </div>
+</div>
+
+<hr>
+<div hidden>
+  <div style="float: right; text-align: right">
+    <p><label for="max">Number of words:</label> <input type="number" value="250" min="1" id="max">
+    <p><label for="per-line"><input type="checkbox" id="per-line"> One word per line</label>
+    <!--<p><label for="colours">Colours:</label> <a href="#" id="random-palette">get random palette</a>-->
+    <p><label>Download:</label>
+      <a id="download-svg" href="#" target="_blank">SVG</a> |
+      <a id="download-png" href="#" target="_blank">PNG</a>
+  </div>
+
+  <div style="float: left">
+    <p><label>Spiral:</label>
+      <label for="archimedean"><input type="radio" name="spiral" id="archimedean" value="archimedean" checked="checked"> Archimedean</label>
+      <label for="rectangular"><input type="radio" name="spiral" id="rectangular" value="rectangular"> Rectangular</label>
+    <p><label for="scale">Scale:</label>
+      <label for="scale-log"><input type="radio" name="scale" id="scale-log" value="log" checked="checked"> log n</label>
+      <label for="scale-sqrt"><input type="radio" name="scale" id="scale-sqrt" value="sqrt"> √n</label>
+      <label for="scale-linear"><input type="radio" name="scale" id="scale-linear" value="linear"> n</label>
+    <p><label for="font">Font:</label> <input type="text" id="font" value="Impact">
+  </div>
+
+  <div id="angles">
+    <p><input type="number" id="angle-count" value="1" min="1"> <label for="angle-count">orientations</label>
+      <label for="angle-from">from</label> <input type="number" id="angle-from" value="0" min="-90" max="90"> °
+      <label for="angle-to">to</label> <input type="number" id="angle-to" value="90" min="-90" max="90"> °
+  </div>
+</div>
+
+</form>
+</div>
+
+<script src="jquery-1.11.3.js"></script>
+<script src="materialize/js/materialize.js"></script>
+<script src="jquery-ui/jquery-ui.js"></script>
+<script src="d3.min.js"></script>
+<script src="d3.slider.js"></script>
+<script src="unicode.js"></script>
+<script src="d3.layout.cloud.js"></script>
+<script src="cloud.js?1"></script>
+<script src="underscore.js"></script>
